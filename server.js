@@ -25,6 +25,11 @@ mongoose.connect(process.env.DB_URI, {
 .then(() => console.log("✅ Kết nối MongoDB thành công!"))
 .catch((error) => console.error("❌ Lỗi kết nối MongoDB:", error));
 
+// Route mặc định để kiểm tra server chạy
+app.get("/", (req, res) => {
+  res.send("🎉 Mamacare Backend đang chạy trên Vercel!");
+});
+
 // Định nghĩa Schema và Model cho User
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, trim: true },
@@ -98,5 +103,5 @@ app.get("/protected", (req, res) => {
   }
 });
 
-// Server listening
-app.listen(PORT, () => console.log(`✅ Server chạy tại http://localhost:${PORT}`));
+// Export app thay vì chạy `app.listen()`
+module.exports = app;

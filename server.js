@@ -10,9 +10,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: ["https://mamacare-demo.vercel.app", "http://localhost:5001"], // Thêm domain frontend của bạn
+  origin: ["http://localhost:3000", "http://localhost:5001", "https://mamacare-demo.vercel.app"], // 🔥 Thêm localhost vào danh sách hợp lệ
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: "Content-Type,Authorization"
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
 
 app.use(express.json());

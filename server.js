@@ -9,21 +9,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Cập nhật Middleware CORS
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-// ✅ Thêm middleware `cors()` đúng
+// ✅ Cấu hình Middleware CORS
 app.use(cors({
-  origin: ["http://localhost:5001", "https://mamacare-demo.vercel.app"], // Đảm bảo đúng URL Frontend
+  origin: ["http://localhost:5001", "https://mamacare-demo.vercel.app"], 
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
@@ -39,12 +27,29 @@ mongoose.connect(process.env.DB_URI, {
 .then(() => console.log("✅ Kết nối MongoDB thành công!"))
 .catch((error) => console.error("❌ Lỗi kết nối MongoDB:", error));
 
-// ✅ Kiểm tra server đang chạy
+// ✅ API kiểm tra server đang chạy
 app.get("/", (req, res) => {
   res.send("🎉 Mamacare Backend đang chạy trên Vercel!");
 });
 
-// ✅ Định nghĩa API Login
+// ✅ API Đăng ký
+app.post("/register", async (req, res) => {
+  try {
+    const { email, password, username } = req.body;
+    const user = await User.findOne({ email });
+    if (user) return res.status(400).json({ message: "Email đã tồn tại!" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ email, password: hashedPassword, username });
+    await newUser.save();
+
+    res.status(201).json({ message: "Đăng ký thành công!" });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server!" });
+  }
+});
+
+// ✅ API Đăng nhập
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -62,5 +67,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// ✅ Xuất app thay vì chạy `app.listen()`
-module.exports = app;
+// ✅ Quan trọng: Thêm `app.listen()` khi chạy trên Vercel
+app.listen(PORT, () => {
+  console.log(`🚀 Server chạy trên http://localhost:${PORT}`);
+});

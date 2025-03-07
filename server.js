@@ -9,24 +9,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Cấu hình Middleware CORS
+// ✅ Cấu hình Middleware CORS (Fix lỗi preflight request)
 app.use(cors({
-  origin: ["https://mamacare-demo.vercel.app", "http://localhost:5001"], // Cho phép cả Localhost và FE trên Vercel
+  origin: ["https://mamacare-demo.vercel.app", "http://localhost:5001"],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
 
-// ✅ Xử lý preflight request `OPTIONS`
-app.options("*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.sendStatus(200);
-});
-
+// ✅ Middleware xử lý JSON
 app.use(express.json());
+
+// ✅ Xử lý preflight request `OPTIONS`
+app.options("*", cors());
 
 // ✅ Kết nối MongoDB
 mongoose.connect(process.env.DB_URI, {
@@ -56,16 +51,12 @@ app.post("/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Kiểm tra tài khoản đã tồn tại chưa
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "Email đã tồn tại!" });
     }
 
-    // Hash mật khẩu
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Lưu vào DB
     const newUser = new User({ username, email, password: hashedPassword });
     await newUser.save();
 
@@ -80,19 +71,16 @@ app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Kiểm tra tài khoản
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Email không tồn tại!" });
     }
 
-    // Kiểm tra mật khẩu
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Sai mật khẩu!" });
     }
 
-    // Tạo token JWT
     const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
     res.json({ message: "Đăng nhập thành công!", token, username: user.username });
@@ -114,7 +102,7 @@ app.get("/protected", (req, res) => {
   }
 });
 
-// ✅ API Gửi email xác nhận thanh toán
+// ✅ API Gửi email xác nhận thanh toán (Sửa lỗi CORS & Tối ưu)
 app.post("/send-payment-email", async (req, res) => {
   try {
     const { name, email, phone, message, servicesUse } = req.body;
@@ -123,11 +111,13 @@ app.post("/send-payment-email", async (req, res) => {
       return res.status(400).json({ message: "Email và gói dịch vụ là bắt buộc!" });
     }
 
-    // ✅ Giả lập gửi email (Bạn cần thay bằng Nodemailer hoặc SendGrid nếu thực tế)
     console.log(`📧 Gửi email xác nhận đến: ${email}`);
     console.log(`Dịch vụ: ${servicesUse}`);
     console.log(`SĐT: ${phone}`);
     console.log(`Lời nhắn: ${message}`);
+
+    // ✅ Giả lập gửi email bằng Nodemailer (Bỏ comment nếu cần sử dụng)
+    // await sendEmail(email, `Xác nhận dịch vụ ${servicesUse}`, `Xin chào ${name}, bạn đã đặt dịch vụ ${servicesUse}.`);
 
     res.json({ message: "✅ Email xác nhận đã được gửi!" });
   } catch (error) {

@@ -131,14 +131,14 @@
         to: email,
         subject: "Xác nhận đăng ký dịch vụ",
         html: `
-          <h3>Xin chào ${name},</h3>
-          <p>Bạn đã đăng ký gói dịch vụ <strong>${servicesUse}</strong>.</p>
-          <p>Chúng tôi sẽ liên hệ với bạn qua số điện thoại: <strong>${phone}</strong></p>
-          <p>Lời nhắn của bạn: <i>${message || "Không có lời nhắn"}</i></p>
-          <br>
-          <p>Trân trọng,</p>
-          <p><strong>Đội ngũ Mamacare</strong></p>
-        `,
+            <h3>Xin chào ${name},</h3>
+            <p>Bạn đã đăng ký gói dịch vụ <strong>${servicesUse}</strong>.</p>
+            <p>Chúng tôi sẽ liên hệ với bạn qua số điện thoại: <strong>${phone}</strong></p>
+            <p>Lời nhắn của bạn: <i>${message || "Không có lời nhắn"}</i></p>
+            <br>
+            <p>Trân trọng,</p>
+            <p><strong>Đội ngũ Mamacare</strong></p>
+          `,
       };
 
       // ✅ Gửi email
@@ -152,7 +152,7 @@
     }
   });
 
-  // ✅ Chạy server trên localhost (Chỉ khi chạy local)
+  // ✅ Kiểm tra nếu đang chạy local thì mới dùng app.listen()
   if (process.env.NODE_ENV !== "production") {
     app.listen(PORT, () => {
       console.log(`🚀 Server chạy trên http://localhost:${PORT}`);

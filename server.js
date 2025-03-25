@@ -109,7 +109,8 @@
   // ✅ API Gửi email xác nhận thanh toán bằng Gmail
   app.post("/send-payment-email", async (req, res) => {
     try {
-      const { name, email, phone, message, servicesUse } = req.body;
+      const { name, email, phone, message, servicesUse, serviceDetails } =
+        req.body;
 
       if (!email || !servicesUse) {
         return res
@@ -126,7 +127,8 @@
         },
       });
 
-      let mailOptions = {
+      // Email cho khách hàng
+      let customerMailOptions = {
         from: `"Mamacare Support" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: "Xác nhận đăng ký dịch vụ",
@@ -141,9 +143,48 @@
           `,
       };
 
-      // ✅ Gửi email
-      await transporter.sendMail(mailOptions);
-      console.log(`📧 Email đã gửi thành công đến: ${email}`);
+      // Email cho quản lý (chi tiết hơn)
+      let adminMailOptions = {
+        from: `"Mamacare Notification" <${process.env.EMAIL_USER}>`,
+        to: "mamacare2025@gmail.com", // Địa chỉ email quản lý cố định
+        subject: `Có đơn đăng ký dịch vụ mới: ${servicesUse}`,
+        html: `
+            <h3>Thông tin đăng ký dịch vụ mới</h3>
+            <p><strong>Gói dịch vụ:</strong> ${servicesUse}</p>
+            <p><strong>Họ tên khách hàng:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Số điện thoại:</strong> ${phone}</p>
+            <p><strong>Lời nhắn:</strong> ${message || "Không có lời nhắn"}</p>
+            ${
+              serviceDetails
+                ? `
+            <h4>Chi tiết dịch vụ:</h4>
+            <p><strong>Tên gói:</strong> ${serviceDetails.originalName || ""}</p>
+            <p><strong>Số buổi:</strong> ${
+              serviceDetails.originalPackage || ""
+            }</p>
+            <p><strong>Giá:</strong> ${serviceDetails.price || ""}</p>
+            <p><strong>Thời gian:</strong> ${serviceDetails.duration || ""}</p>
+            <p><strong>Loại dịch vụ:</strong> ${
+              serviceDetails.serviceType || ""
+            }</p>
+            `
+                : ""
+            }
+            <br>
+            <p><i>Email này được gửi tự động từ hệ thống Mamacare.</i></p>
+          `,
+      };
+
+      // Gửi email đến khách hàng
+      await transporter.sendMail(customerMailOptions);
+      console.log(`📧 Email đã gửi thành công đến khách hàng: ${email}`);
+
+      // Gửi email đến quản lý
+      await transporter.sendMail(adminMailOptions);
+      console.log(
+        `📧 Email đã gửi thành công đến quản lý: mamacare2025@gmail.com`
+      );
 
       res.json({ message: "✅ Email xác nhận đã được gửi!" });
     } catch (error) {
